@@ -11,16 +11,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wothing/wonaming/etcdv3"
-	"github.com/wothing/wonaming/etcdv3/example/pb"
-
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/resolver"
+
+	"github.com/wothing/wonaming/consul"
+
+	"github.com/wothing/wonaming/etcdv3/example/pb"
 )
 
 func main() {
-	r := etcdv3.NewResolver("localhost:2379")
+	r := consul.NewBuilder("1demonoid02.rtty.in:8500")
+
 	resolver.Register(r)
 
 	conn, err := grpc.Dial(r.Scheme()+"://author/project/test", grpc.WithBalancerName("round_robin"), grpc.WithInsecure())

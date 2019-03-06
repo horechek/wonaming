@@ -11,8 +11,8 @@ import (
 
 // ConsulWatcher is the implementation of grpc.naming.Watcher
 type ConsulWatcher struct {
-	// cr: ConsulResolver
-	cr *ConsulResolver
+	// cr: Builder
+	cr *Builder
 	// cc: Consul Client
 	cc *consul.Client
 

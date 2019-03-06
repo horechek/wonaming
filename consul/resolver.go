@@ -1,43 +1,62 @@
 package consul
 
 import (
-	"errors"
 	"fmt"
-
 	consul "github.com/hashicorp/consul/api"
-	"google.golang.org/grpc/naming"
+	"google.golang.org/grpc/resolver"
 )
 
-// ConsulResolver is the implementaion of grpc.naming.Resolver
-type ConsulResolver struct {
-	ServiceName string //service name
+// Builder is the implementaion of grpc.naming.Resolver
+type Builder struct {
+	addr string //service name
 }
 
-// NewResolver return ConsulResolver with service name
-func NewResolver(serviceName string) *ConsulResolver {
-	return &ConsulResolver{ServiceName: serviceName}
+// NewBuilder return Builder with service name
+func NewBuilder(addr string) resolver.Builder {
+	return &Builder{addr: addr}
 }
 
-// Resolve to resolve the service from consul, target is the dial address of consul
-func (cr *ConsulResolver) Resolve(target string) (naming.Watcher, error) {
-	if cr.ServiceName == "" {
-		return nil, errors.New("wonaming: no service name provided")
-	}
+func (cr *Builder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOption) (resolver.Resolver, error) {
+	var err error
 
 	// generate consul client, return if error
 	conf := &consul.Config{
 		Scheme:  "http",
-		Address: target,
+		Address: cr.addr,
 	}
 	client, err := consul.NewClient(conf)
 	if err != nil {
 		return nil, fmt.Errorf("wonaming: creat consul error: %v", err)
 	}
 
-	// return ConsulWatcher
-	watcher := &ConsulWatcher{
-		cr: cr,
-		cc: client,
+	r := &Resolver{
+		cc:     cc,
+		consul: client,
 	}
-	return watcher, nil
+
+	go r.watch(target)
+
+	return r, nil
+}
+
+func (cr *Builder) Scheme() string {
+	return ""
+}
+
+type Resolver struct {
+	cc     resolver.ClientConn
+	consul *consul.Client
+}
+
+// Resolve to resolve the service from consul, target is the dial address of consul
+func (cr *Resolver) ResolveNow(option resolver.ResolveNowOption) {
+	fmt.Println(option)
+}
+
+func (cr *Resolver) Close() {
+	fmt.Println("close")
+}
+
+func (r *Resolver) watch(target resolver.Target) {
+	fmt.Println(target)
 }
